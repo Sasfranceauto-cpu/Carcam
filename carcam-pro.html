@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>CarCam Pro</title>
+<link rel="manifest" href="#" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  #app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* === SCREENS === */
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* === HOME SCREEN === */
+  #home {
+    padding: 0;
+    background: var(--bg);
+  }
+
+  .home-header {
+    padding: 56px 24px 24px;
+    background: linear-gradient(180deg, #111 0%, var(--bg) 100%);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--accent); }
+
+  .logo-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .home-body { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
+
+  .session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .session-card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .session-card p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .new-session-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: transform 0.1s, opacity 0.1s;
+  }
+
+  .new-session-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 24px 0 12px;
+  }
+
+  .bg-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .bg-thumb {
+    aspect-ratio: 16/9;
+    border-radius: var(--radius-sm);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bg-thumb:active { transform: scale(0.97); }
+  .bg-thumb.selected { border-color: var(--accent); }
+
+  .bg-thumb .bg-icon { font-size: 24px; }
+  .bg-thumb .bg-name { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+  .bg-thumb canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  /* === SETUP SCREEN === */
+  #setup {
+    background: var(--bg);
+  }
+
+  .screen-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 56px 20px 20px;
+  }
+
+  .back-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .screen-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .setup-body { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
+
+  .input-group { margin-bottom: 16px; }
+  .input-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .input-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus { border-color: rgba(232,255,71,0.4); }
+  .input-field::placeholder { color: var(--muted); }
+
+  select.input-field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .angle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .angle-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .angle-chip.selected {
+    background: rgba(232,255,71,0.12);
+    border-color: rgba(232,255,71,0.5);
+    color: var(--accent);
+  }
+
+  .angle-chip .chip-icon { font-size: 22px; margin-bottom: 4px; }
+  .angle-chip .chip-label { font-size: 10px; font-weight: 500; color: inherit; }
+  .angle-chip:not(.selected) .chip-label { color: var(--muted); }
+
+  .mode-toggle {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    color: #0a0a0a;
+    font-weight: 700;
+  }
+
+  .start-btn {
+    width: calc(100% - 32px);
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 398px;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .start-btn:active { transform: translateX(-50%) scale(0.97); }
+
+  /* === CAMERA SCREEN === */
+  #camera {
+    background: #000;
+    position: relative;
+  }
+
+  #video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .camera-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .camera-top {
+    padding: 52px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    pointer-events: all;
+  }
+
+  .angle-indicator {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+
+  .angle-current {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .angle-count {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 1px;
+  }
+
+  .angle-guide {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .guide-frame {
+    width: 75vw;
+    max-width: 280px;
+    aspect-ratio: 16/9;
+    border: 2px solid rgba(232,255,71,0.4);
+    border-radius: 8px;
+    pointer-events: none;
+    position: relative;
+  }
+
+  .guide-frame::before, .guide-frame::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .guide-frame::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+  .guide-frame::after { top: -2px; right: -2px; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+
+  .guide-tip {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .camera-bottom {
+    padding: 16px 20px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    pointer-events: all;
+  }
+
+  .thumb-preview {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    overflow: hidden;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .thumb-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .thumb-count {
+    position: absolute;
+    bottom: 3px; right: 3px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+
+  .shutter-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+
+  .shutter-btn:active { transform: scale(0.92); background: #ddd; }
+
+  .shutter-inner {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #0a0a0a;
+  }
+
+  .skip-btn {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .angle-strip {
+    position: absolute;
+    bottom: 120px;
+    left: 0; right: 0;
+    display: flex;
+    gap: 6px;
+    padding: 0 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    pointer-events: all;
+  }
+
+  .angle-strip::-webkit-scrollbar { display: none; }
+
+  .strip-item {
+    flex-shrink: 0;
+    width: 52px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    padding: 6px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .strip-item.active { border-color: var(--accent); }
+  .strip-item.done { border-color: rgba(232,255,71,0.4); }
+
+  .strip-icon { font-size: 16px; }
+  .strip-label { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; font-weight: 500; }
+  .strip-done { font-size: 8px; color: var(--accent); margin-top: 1px; }
+
+  /* 360 progress ring */
+  .ring-360 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px; height: 90px;
+    pointer-events: none;
+  }
+
+  .ring-360 circle {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+
+  /* === GALLERY SCREEN === */
+  #gallery {
+    background: var(--bg);
+  }
+
+  .gallery-body { flex: 1; overflow-y: auto; padding: 0 16px 100px; }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .photo-card {
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .photo-card:active { transform: scale(0.97); }
+
+  .photo-card img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .photo-info {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .photo-name { font-size: 11px; font-weight: 500; color: var(--text); }
+  .photo-angle { font-size: 10px; color: var(--muted); }
+
+  .status-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .status-badge.raw { background: rgba(255,255,255,0.08); color: var(--muted); }
+  .status-badge.processed { background: rgba(232,255,71,0.15); color: var(--accent); }
+
+  .gallery-actions {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    padding: 12px 16px 28px;
+    background: linear-gradient(0deg, var(--bg) 60%, transparent);
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn.primary { background: var(--accent); color: #0a0a0a; border-color: transparent; }
+
+  /* === EDITOR SCREEN === */
+  #editor {
+    background: var(--bg);
+  }
+
+  .editor-preview {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #editor-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .editor-controls {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .bg-selector {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .bg-selector::-webkit-scrollbar { display: none; }
+
+  .bg-option {
+    flex-shrink: 0;
+    width: 64px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .bg-option-thumb {
+    width: 64px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    margin-bottom: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .bg-option.selected .bg-option-thumb { border-color: var(--accent); }
+  .bg-option-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+
+  .process-strip {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .process-chip {
+    flex: 1;
+    padding: 9px 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .process-chip.active { background: rgba(232,255,71,0.1); border-color: rgba(232,255,71,0.4); color: var(--accent); }
+
+  /* === PROCESSING OVERLAY === */
+  .processing-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .processing-overlay.show { display: flex; }
+
+  .processing-spinner {
+    width: 56px; height: 56px;
+    border: 3px solid rgba(232,255,71,0.15);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .processing-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .processing-sub { font-size: 13px; color: var(--muted); }
+
+  /* === TOAST === */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* === PROGRESS BAR === */
+  .progress-track {
+    height: 2px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* Shake animation for guide */
+  @keyframes pulse-guide {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+
+  .guide-frame.pulse { animation: pulse-guide 1.5s ease-in-out infinite; }
+
+  /* Flash on capture */
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.05s;
+  }
+  .flash.fire { opacity: 0.7; transition: opacity 0.05s; }
+  .flash.fade { opacity: 0; transition: opacity 0.4s; }
+
+  /* Canvas for BG preview */
+  .mini-canvas { width: 100%; height: 100%; display: block; }
+
+  /* === IMPORT === */
+  .import-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px dashed rgba(232,255,71,0.35);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .import-btn:active { transform: scale(0.97); background: rgba(232,255,71,0.06); }
+
+  /* Import angle picker modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 90;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 430px;
+    padding: 20px 16px 36px;
+    border-top: 1px solid var(--border);
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(60px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  .modal-angle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+  }
+
+  .import-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .import-preview-thumb {
+    aspect-ratio: 4/3;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .import-preview-thumb.selected { border-color: var(--accent); }
+
+  .import-preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .import-preview-thumb .remove-x {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .import-confirm-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .import-confirm-btn:active { transform: scale(0.97); }
+  .import-confirm-btn:disabled { opacity: 0.35; pointer-events: none; }
+
+  /* camera import button */
+  .cam-import-btn {
+    position: absolute;
+    top: 52px;
+    right: 20px;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 15;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- FLASH -->
+  <div class="flash" id="flash"></div>
+
+  <!-- === HOME === -->
+  <div class="screen active" id="home">
+    <div class="home-header">
+      <div class="logo">Car<span>Cam</span> Pro</div>
+      <div class="logo-sub">Votre studio photo automobile</div>
+    </div>
+    <div class="home-body">
+      <div class="session-card">
+        <h2>Nouvelle session</h2>
+        <p>Créez une session photo complète pour votre véhicule</p>
+        <button class="new-session-btn" onclick="goTo('setup')">📸 Démarrer une session</button>
+        <button class="import-btn" style="margin-top:10px; margin-bottom:0" onclick="openImportFlow('home')">📂 Importer des photos existantes</button>
+      </div>
+
+      <div class="section-title">Fonds showroom</div>
+      <div class="bg-grid" id="bg-preview-grid"></div>
+
+      <div class="section-title">Dernières sessions</div>
+      <div id="sessions-list">
+        <div style="text-align:center; padding: 24px; color: var(--muted); font-size:13px;">
+          Aucune session pour l'instant
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- === SETUP === -->
+  <div class="screen" id="setup">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('home')">←</div>
+      <div class="screen-title">Nouvelle session</div>
+    </div>
+    <div class="setup-body">
+      <div class="input-group">
+        <div class="input-label">Marque & Modèle</div>
+        <input class="input-field" id="car-name" type="text" placeholder="ex: BMW Série 3 2023" />
+      </div>
+      <div class="input-group">
+        <div class="input-label">Prix</div>
+        <input class="input-field" id="car-price" type="number" placeholder="ex: 28500" inputmode="numeric" />
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Mode de prise de vue</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('multi', this)">Multi-angles</button>
+          <button class="mode-btn" onclick="setMode('360', this)">360°</button>
+        </div>
+      </div>
+
+      <div id="angle-selector">
+        <div class="input-label" style="margin-top:16px; margin-bottom:8px">Angles à capturer</div>
+        <div class="angle-grid" id="angle-chips"></div>
+      </div>
+
+      <div class="input-group" style="margin-top:16px">
+        <div class="input-label">Fond showroom</div>
+        <div class="bg-selector" id="setup-bg-selector"></div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startSession()">
+      <span>🚀</span> Démarrer la session
+    </button>
+  </div>
+
+  <!-- === CAMERA === -->
+  <div class="screen" id="camera">
+    <video id="video-feed" autoplay playsinline muted></video>
+    <canvas id="capture-canvas" style="display:none"></canvas>
+
+    <div class="camera-overlay">
+      <div class="camera-top">
+        <div class="back-btn" onclick="stopCamera()" style="background:rgba(0,0,0,0.5); border-color:rgba(255,255,255,0.15)">←</div>
+        <div class="angle-indicator">
+          <div class="angle-current" id="cam-angle-name">Avant</div>
+          <div class="angle-count" id="cam-angle-count">1 / 8</div>
+        </div>
+        <div class="back-btn" onclick="openImportFlow('camera')" style="background:rgba(0,0,0,0.5); border-color:rgba(255,255,255,0.15); font-size:16px" title="Importer">📂</div>
+      </div>
+
+      <div class="angle-guide">
+        <div class="guide-frame pulse" id="guide-frame"></div>
+        <div class="guide-tip" id="guide-tip">Cadrez le véhicule dans le guide</div>
+      </div>
+
+      <div class="angle-strip" id="angle-strip"></div>
+
+      <div class="camera-bottom">
+        <div class="thumb-preview" id="last-thumb" onclick="goTo('gallery')">
+          <div class="thumb-count" id="thumb-count" style="display:none">0</div>
+        </div>
+        <div class="shutter-btn" onclick="capturePhoto()">
+          <div class="shutter-inner"></div>
+        </div>
+        <div class="skip-btn" onclick="skipAngle()">
+          <span style="font-size:16px">→</span>
+          <span>Passer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- === GALLERY === -->
+  <div class="screen" id="gallery">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('camera')">←</div>
+      <div class="screen-title" id="gallery-title">Photos</div>
+    </div>
+    <div class="gallery-body">
+      <div class="progress-track"><div class="progress-fill" id="gallery-progress" style="width:0%"></div></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px">
+        <span style="font-size:12px; color:var(--muted)" id="photos-count">0 photo(s)</span>
+        <span style="font-size:12px; color:var(--accent)" id="photos-done">0 traitée(s)</span>
+      </div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+    <div class="gallery-actions">
+      <button class="action-btn" onclick="goTo('camera')">📷 Continuer</button>
+      <button class="action-btn" onclick="openImportFlow('gallery')" style="font-size:12px">📂 Importer</button>
+      <button class="action-btn primary" onclick="processAll()">✨ Traiter</button>
+    </div>
+  </div>
+
+  <!-- === EDITOR === -->
+  <div class="screen" id="editor">
+    <div class="screen-header">
+      <div class="back-btn" onclick="goTo('gallery')">←</div>
+      <div class="screen-title" id="editor-title">Éditer</div>
+    </div>
+    <div class="editor-preview">
+      <canvas id="editor-canvas"></canvas>
+    </div>
+    <div class="editor-controls">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:500; text-transform:uppercase; letter-spacing:.8px">Fond showroom</div>
+      <div class="bg-selector" id="editor-bg-selector"></div>
+      <div class="process-strip">
+        <div class="process-chip active" id="chip-bg">🏙️ Fond</div>
+        <div class="process-chip" id="chip-enhance">✨ Améliorer</div>
+        <div class="process-chip" id="chip-plate">🔲 Plaque</div>
+        <div class="process-chip" id="chip-watermark">💧 Filigrane</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px">
+        <button class="action-btn" onclick="savePhoto()" style="flex:1">💾 Sauvegarder</button>
+        <button class="action-btn primary" onclick="exportPhoto()" style="flex:1">📤 Exporter</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PROCESSING OVERLAY -->
+<div class="processing-overlay" id="processing">
+  <div class="processing-spinner"></div>
+  <div class="processing-text" id="proc-text">Traitement en cours…</div>
+  <div class="processing-sub" id="proc-sub">Application du fond showroom</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="import-file-input" accept="image/*" multiple style="display:none" />
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Importer des photos</div>
+    <div class="modal-sub" id="import-modal-sub">Sélectionnez les photos depuis votre galerie</div>
+
+    <!-- Step 1: file picker (shown before files selected) -->
+    <div id="import-step-pick">
+      <button class="import-btn" style="margin-bottom:16px" onclick="triggerFilePicker()">
+        🖼️ Choisir depuis la galerie
+      </button>
+    </div>
+
+    <!-- Step 2: preview + angle assignment (shown after files selected) -->
+    <div id="import-step-assign" style="display:none">
+      <div class="import-preview-grid" id="import-preview-grid"></div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.7px; font-weight:500">Assigner un angle</div>
+      <div class="modal-angle-grid" id="import-angle-grid"></div>
+      <button class="import-confirm-btn" id="import-confirm-btn" onclick="confirmImport()" disabled>
+        ✅ Ajouter à la session
+      </button>
+    </div>
+
+    <button onclick="closeImportModal()" style="width:100%; margin-top:10px; background:transparent; border:none; color:var(--muted); font-size:13px; cursor:pointer; padding:6px;">Annuler</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  mode: 'multi',
+  selectedAngles: [],
+  selectedBg: 0,
+  currentAngleIdx: 0,
+  photos: [],
+  carName: '',
+  carPrice: '',
+  stream: null,
+  editorPhoto: null,
+  editorBg: 0,
+};
+
+// ============================================================
+// ANGLES CONFIG
+// ============================================================
+const ALL_ANGLES = [
+  { id: 'front',     label: 'Avant',       icon: '🚗', tip: 'Face avant du véhicule', guide: 'Cadrez la face avant complète' },
+  { id: 'rear',      label: 'Arrière',      icon: '🔴', tip: 'Face arrière', guide: 'Cadrez la face arrière complète' },
+  { id: 'left',      label: 'Gauche',       icon: '◀️', tip: 'Profil gauche', guide: 'Profil complet côté conducteur' },
+  { id: 'right',     label: 'Droite',       icon: '▶️', tip: 'Profil droit', guide: 'Profil complet côté passager' },
+  { id: 'fl',        label: '¾ Avant G',    icon: '↖️', tip: '3/4 avant gauche', guide: 'Angle 45° avant-gauche' },
+  { id: 'fr',        label: '¾ Avant D',    icon: '↗️', tip: '3/4 avant droit', guide: 'Angle 45° avant-droit' },
+  { id: 'rl',        label: '¾ Arr. G',     icon: '↙️', tip: '3/4 arrière gauche', guide: 'Angle 45° arrière-gauche' },
+  { id: 'rr',        label: '¾ Arr. D',     icon: '↘️', tip: '3/4 arrière droit', guide: 'Angle 45° arrière-droit' },
+  { id: 'interior',  label: 'Intérieur',    icon: '🪑', tip: 'Tableau de bord', guide: 'Tableau de bord complet' },
+  { id: 'cockpit',   label: 'Cockpit',      icon: '🎮', tip: 'Volant & console', guide: 'Volant et console centrale' },
+  { id: 'engine',    label: 'Moteur',       icon: '⚙️', tip: 'Compartiment moteur', guide: 'Ouvrez le capot, cadrez le moteur' },
+  { id: 'trunk',     label: 'Coffre',       icon: '📦', tip: 'Coffre ouvert', guide: 'Coffre ouvert vu de dessus' },
+];
+
+const ANGLES_360 = [
+  'front','fl','left','rl','rear','rr','right','fr',
+  'fl','left','rl','rear' // extra loop points
+];
+
+// ============================================================
+// BACKGROUNDS
+// ============================================================
+const BACKGROUNDS = [
+  { name: 'Showroom', emoji: '🏢', color1: '#1a1a2e', color2: '#16213e' },
+  { name: 'Studio',   emoji: '⬜', color1: '#f5f5f5', color2: '#e8e8e8' },
+  { name: 'Nuit',     emoji: '🌙', color1: '#0d0221', color2: '#1a0533' },
+  { name: 'Sunset',   emoji: '🌅', color1: '#ff6b35', color2: '#f7c59f' },
+  { name: 'Route',    emoji: '🛣️', color1: '#2d4a22', color2: '#1a2e14' },
+  { name: 'Ville',    emoji: '🏙️', color1: '#1c1c3a', color2: '#2d2d5e' },
+];
+
+function drawBgCanvas(canvas, bgIdx, w = 300, h = 200) {
+  const bg = BACKGROUNDS[bgIdx];
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, bg.color1);
+  grad.addColorStop(1, bg.color2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Fake floor reflection
+  const floor = ctx.createLinearGradient(0, h * 0.65, 0, h);
+  floor.addColorStop(0, 'rgba(255,255,255,0.03)');
+  floor.addColorStop(1, 'rgba(255,255,255,0.08)');
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, h * 0.65, w, h * 0.35);
+
+  // Fake lights
+  if (bgIdx === 0 || bgIdx === 5) {
+    for (let i = 0; i < 3; i++) {
+      const grd = ctx.createRadialGradient(w * (0.2 + i * 0.3), h * 0.3, 0, w * (0.2 + i * 0.3), h * 0.3, 40);
+      grd.addColorStop(0, 'rgba(255,255,255,0.07)');
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+  return canvas;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screen).classList.add('active');
+}
+
+// ============================================================
+// HOME INIT
+// ============================================================
+function initHome() {
+  const grid = document.getElementById('bg-preview-grid');
+  grid.innerHTML = '';
+  BACKGROUNDS.forEach((bg, i) => {
+    const el = document.createElement('div');
+    el.className = 'bg-thumb' + (i === state.selectedBg ? ' selected' : '');
+    el.innerHTML = `<span class="bg-icon">${bg.emoji}</span><span class="bg-name">${bg.name}</span>`;
+    el.onclick = () => {
+      state.selectedBg = i;
+      document.querySelectorAll('.bg-thumb').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+    grid.appendChild(el);
+  });
+}
+
+// ============================================================
+// SETUP
+// ============================================================
+function initSetup() {
+  const chips = document.getElementById('angle-chips');
+  chips.innerHTML = '';
+  ALL_ANGLES.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'angle-chip' + (state.selectedAngles.includes(a.id) ? ' selected' : '');
+    el.innerHTML = `<div class="chip-icon">${a.icon}</div><div class="chip-label">${a.label}</div>`;
+    el.onclick = () => {
+      if (state.selectedAngles.includes(a.id)) {
+        state.selectedAngles = state.selectedAngles.filter(x => x !== a.id);
+        el.classList.remove('selected');
+      } else {
+        state.selectedAngles.push(a.id);
+        el.classList.add('selected');
+      }
+    };
+    chips.appendChild(el);
+  });
+
+  // Default selection
+  if (state.selectedAngles.length === 0) {
+    ['front','rear','left','right','fl','fr','interior'].forEach(id => {
+      state.selectedAngles.push(id);
+      chips.querySelector(`[data-id="${id}"]`);
+    });
+    chips.querySelectorAll('.angle-chip').forEach((el, i) => {
+      const a = ALL_ANGLES[i];
+      if (state.selectedAngles.includes(a.id)) el.classList.add('selected');
+    });
+  }
+
+  // BG selector
+  const bgSel = document.getElementById('setup-bg-selector');
+  bgSel.innerHTML = '';
+  BACKGROUNDS.forEach((bg, i) => {
+    const el = document.createElement('div');
+    el.className = 'bg-option' + (i === state.selectedBg ? ' selected' : '');
+    el.innerHTML = `<div class="bg-option-thumb">${bg.emoji}</div><div class="bg-option-label">${bg.name}</div>`;
+    el.onclick = () => {
+      state.selectedBg = i;
+      bgSel.querySelectorAll('.bg-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+    bgSel.appendChild(el);
+  });
+}
+
+function setMode(mode, btn) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const angleSection = document.getElementById('angle-selector');
+  if (mode === '360') {
+    angleSection.style.display = 'none';
+    state.selectedAngles = ['front','fl','left','rl','rear','rr','right','fr'];
+  } else {
+    angleSection.style.display = 'block';
+  }
+}
+
+function startSession() {
+  state.carName = document.getElementById('car-name').value || 'Véhicule';
+  state.carPrice = document.getElementById('car-price').value || '';
+  state.currentAngleIdx = 0;
+  state.photos = [];
+  if (state.mode === '360') {
+    state.selectedAngles = ['front','fl','left','rl','rear','rr','right','fr'];
+  }
+  if (state.selectedAngles.length === 0) {
+    showToast('Sélectionnez au moins un angle');
+    return;
+  }
+  startCamera();
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function startCamera() {
+  goTo('camera');
+  try {
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
+      audio: false
+    });
+    document.getElementById('video-feed').srcObject = state.stream;
+    updateCameraUI();
+    buildAngleStrip();
+  } catch (e) {
+    // Fallback: simulate camera
+    simulateCamera();
+  }
+}
+
+function simulateCamera() {
+  // Show placeholder when no camera available (browser/desktop preview)
+  const video = document.getElementById('video-feed');
+  video.style.background = '#111';
+  // Draw simulated viewfinder
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280; canvas.height = 720;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,1280,720);
+  ctx.strokeStyle = 'rgba(232,255,71,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(200,150,880,420);
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📷 Caméra non disponible', 640, 360);
+  ctx.font = '18px sans-serif';
+  ctx.fillText('(Utilisez sur mobile pour activer)', 640, 400);
+  video.srcObject = null;
+  video.poster = canvas.toDataURL();
+  updateCameraUI();
+  buildAngleStrip();
+}
+
+function stopCamera() {
+  if (state.stream) {
+    state.stream.getTracks().forEach(t => t.stop());
+    state.stream = null;
+  }
+  goTo(state.photos.length > 0 ? 'gallery' : 'setup');
+}
+
+function updateCameraUI() {
+  const angles = state.mode === '360' ? state.selectedAngles : state.selectedAngles;
+  const cur = angles[state.currentAngleIdx];
+  const angleData = ALL_ANGLES.find(a => a.id === cur) || ALL_ANGLES[0];
+
+  document.getElementById('cam-angle-name').textContent = angleData.label;
+  document.getElementById('cam-angle-count').textContent =
+    `${state.currentAngleIdx + 1} / ${angles.length}`;
+  document.getElementById('guide-tip').textContent = angleData.guide;
+  document.getElementById('thumb-count').textContent = state.photos.length;
+  document.getElementById('thumb-count').style.display = state.photos.length > 0 ? 'block' : 'none';
+
+  // Update last thumb
+  if (state.photos.length > 0) {
+    const last = state.photos[state.photos.length - 1];
+    const thumb = document.getElementById('last-thumb');
+    thumb.innerHTML = `<img src="${last.dataUrl}" /><div class="thumb-count">${state.photos.length}</div>`;
+  }
+}
+
+function buildAngleStrip() {
+  const strip = document.getElementById('angle-strip');
+  strip.innerHTML = '';
+  state.selectedAngles.forEach((id, i) => {
+    const a = ALL_ANGLES.find(x => x.id === id) || ALL_ANGLES[0];
+    const el = document.createElement('div');
+    const isDone = state.photos.find(p => p.angleId === id);
+    el.className = 'strip-item' + (i === state.currentAngleIdx ? ' active' : '') + (isDone ? ' done' : '');
+    el.innerHTML = `<div class="strip-icon">${a.icon}</div><div class="strip-label">${a.label}</div>${isDone ? '<div class="strip-done">✓</div>' : ''}`;
+    el.onclick = () => {
+      state.currentAngleIdx = i;
+      updateCameraUI();
+      buildAngleStrip();
+    };
+    strip.appendChild(el);
+  });
+}
+
+function capturePhoto() {
+  const video = document.getElementById('video-feed');
+  const canvas = document.getElementById('capture-canvas');
+  const flash = document.getElementById('flash');
+
+  // Flash
+  flash.classList.add('fire');
+  setTimeout(() => { flash.classList.remove('fire'); flash.classList.add('fade'); }, 80);
+  setTimeout(() => flash.classList.remove('fade'), 500);
+
+  // Capture
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext('2d');
+
+  if (video.srcObject) {
+    ctx.drawImage(video, 0, 0);
+  } else {
+    // Simulate capture with background
+    drawBgCanvas(canvas, state.selectedBg, canvas.width, canvas.height);
+    // Draw fake car silhouette
+    ctx.fillStyle = 'rgba(80,80,80,0.6)';
+    const cx = canvas.width/2, cy = canvas.height/2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, canvas.width*0.35, canvas.height*0.18, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(60,60,60,0.8)';
+    ctx.fillRect(cx - canvas.width*0.3, cy - canvas.height*0.12, canvas.width*0.6, canvas.height*0.3);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillText('SIMULATION — Caméra désactivée', cx - 150, canvas.height*0.85);
+  }
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  const angles = state.selectedAngles;
+  const angleId = angles[state.currentAngleIdx];
+  const angleData = ALL_ANGLES.find(a => a.id === angleId) || ALL_ANGLES[0];
+
+  state.photos.push({
+    id: Date.now(),
+    dataUrl,
+    angleId,
+    angleName: angleData.label,
+    angleIcon: angleData.icon,
+    processed: false,
+    processedUrl: null,
+  });
+
+  // Vibrate
+  if (navigator.vibrate) navigator.vibrate(40);
+
+  // Advance
+  if (state.currentAngleIdx < angles.length - 1) {
+    state.currentAngleIdx++;
+    updateCameraUI();
+    buildAngleStrip();
+  } else {
+    showToast('Tous les angles capturés ! ✅');
+    setTimeout(() => {
+      stopCamera();
+      initGallery();
+      goTo('gallery');
+    }, 800);
+  }
+}
+
+function skipAngle() {
+  const angles = state.selectedAngles;
+  if (state.currentAngleIdx < angles.length - 1) {
+    state.currentAngleIdx++;
+    updateCameraUI();
+    buildAngleStrip();
+    showToast('Angle passé');
+  }
+}
+
+// ============================================================
+// GALLERY
+// ============================================================
+function initGallery() {
+  const title = document.getElementById('gallery-title');
+  title.textContent = state.carName || 'Photos';
+
+  const grid = document.getElementById('photo-grid');
+  grid.innerHTML = '';
+
+  const total = state.selectedAngles.length;
+  const done = state.photos.length;
+  const processed = state.photos.filter(p => p.processed).length;
+
+  document.getElementById('gallery-progress').style.width = `${(done/total)*100}%`;
+  document.getElementById('photos-count').textContent = `${done} photo(s) sur ${total}`;
+  document.getElementById('photos-done').textContent = `${processed} traitée(s)`;
+
+  state.photos.forEach((photo, i) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.innerHTML = `
+      <img src="${photo.processedUrl || photo.dataUrl}" />
+      <div class="photo-info">
+        <div>
+          <div class="photo-name">${photo.angleIcon} ${photo.angleName}</div>
+        </div>
+        <div class="status-badge ${photo.processed ? 'processed' : 'raw'}">${photo.processed ? '✓ OK' : 'Brut'}</div>
+      </div>`;
+    card.onclick = () => openEditor(i);
+    grid.appendChild(card);
+  });
+}
+
+async function processAll() {
+  if (state.photos.length === 0) { showToast('Aucune photo à traiter'); return; }
+  showProcessing('Application des fonds…', 'Traitement IA en cours');
+
+  for (let i = 0; i < state.photos.length; i++) {
+    document.getElementById('proc-sub').textContent = `Photo ${i+1}/${state.photos.length} — ${state.photos[i].angleName}`;
+    await applyBackground(state.photos[i], state.selectedBg);
+    await sleep(300);
+  }
+
+  hideProcessing();
+  initGallery();
+  showToast(`${state.photos.length} photos traitées ✨`);
+}
+
+async function applyBackground(photo, bgIdx) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw showroom background
+      drawBgCanvas(canvas, bgIdx, canvas.width, canvas.height);
+
+      // Simulate car extraction: slightly darken edges and overlay the car
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(img, 0, 0);
+      ctx.globalAlpha = 1;
+
+      // Reflection effect
+      ctx.save();
+      ctx.scale(1, -1);
+      ctx.translate(0, -canvas.height * 2);
+      ctx.globalAlpha = 0.08;
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      photo.processedUrl = canvas.toDataURL('image/jpeg', 0.9);
+      photo.processed = true;
+      resolve();
+    };
+    img.src = photo.dataUrl;
+  });
+}
+
+// ============================================================
+// EDITOR
+// ============================================================
+function openEditor(idx) {
+  state.editorPhoto = idx;
+  state.editorBg = state.selectedBg;
+  const photo = state.photos[idx];
+  document.getElementById('editor-title').textContent = `${photo.angleIcon} ${photo.angleName}`;
+
+  // Init BG selector
+  const sel = document.getElementById('editor-bg-selector');
+  sel.innerHTML = '';
+  BACKGROUNDS.forEach((bg, i) => {
+    const el = document.createElement('div');
+    el.className = 'bg-option' + (i === state.editorBg ? ' selected' : '');
+    el.innerHTML = `<div class="bg-option-thumb">${bg.emoji}</div><div class="bg-option-label">${bg.name}</div>`;
+    el.onclick = () => {
+      state.editorBg = i;
+      sel.querySelectorAll('.bg-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      renderEditor();
+    };
+    sel.appendChild(el);
+  });
+
+  goTo('editor');
+  renderEditor();
+}
+
+function renderEditor() {
+  const photo = state.photos[state.editorPhoto];
+  const canvas = document.getElementById('editor-canvas');
+  const container = canvas.parentElement;
+  const img = new Image();
+  img.onload = () => {
+    const ratio = img.width / img.height;
+    const maxW = container.clientWidth;
+    const maxH = container.clientHeight;
+    let w = maxW, h = maxW / ratio;
+    if (h > maxH) { h = maxH; w = maxH * ratio; }
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    drawBgCanvas(canvas, state.editorBg, w, h);
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(img, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+
+    // Watermark
+    if (document.getElementById('chip-watermark').classList.contains('active')) {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = `${Math.max(12, w * 0.03)}px Syne, sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText(state.carName || 'CarCam Pro', w - 12, h - 12);
+    }
+  };
+  img.src = photo.processedUrl || photo.dataUrl;
+}
+
+document.querySelectorAll('.process-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    this.classList.toggle('active');
+    renderEditor();
+  });
+});
+
+function savePhoto() {
+  const canvas = document.getElementById('editor-canvas');
+  const photo = state.photos[state.editorPhoto];
+  photo.processedUrl = canvas.toDataURL('image/jpeg', 0.92);
+  photo.processed = true;
+  showToast('Photo sauvegardée ✅');
+  initGallery();
+}
+
+function exportPhoto() {
+  const canvas = document.getElementById('editor-canvas');
+  const link = document.createElement('a');
+  const photo = state.photos[state.editorPhoto];
+  link.download = `${(state.carName || 'vehicule').replace(/\s+/g,'-')}_${photo.angleId}.jpg`;
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.click();
+  showToast('Export téléchargé 📥');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showProcessing(text, sub) {
+  document.getElementById('proc-text').textContent = text;
+  document.getElementById('proc-sub').textContent = sub;
+  document.getElementById('processing').classList.add('show');
+}
+function hideProcessing() { document.getElementById('processing').classList.remove('show'); }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ============================================================
+// IMPORT FLOW
+// ============================================================
+let importContext = 'home'; // where import was triggered from
+let importFiles = []; // FileReader results {dataUrl, file}
+let importSelectedAngle = null;
+
+function openImportFlow(context) {
+  importContext = context;
+  importFiles = [];
+  importSelectedAngle = null;
+
+  // If coming from home, ensure a basic session exists
+  if (context === 'home') {
+    if (!state.carName) state.carName = 'Véhicule importé';
+    if (state.selectedAngles.length === 0) {
+      state.selectedAngles = ['front','rear','left','right','fl','fr','interior'];
+    }
+  }
+
+  // Reset modal
+  document.getElementById('import-step-pick').style.display = 'block';
+  document.getElementById('import-step-assign').style.display = 'none';
+  document.getElementById('import-modal-sub').textContent = 'Sélectionnez une ou plusieurs photos';
+  document.getElementById('import-modal').classList.add('show');
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('show');
+}
+
+function triggerFilePicker() {
+  document.getElementById('import-file-input').value = '';
+  document.getElementById('import-file-input').click();
+}
+
+document.getElementById('import-file-input').addEventListener('change', async function(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+
+  showProcessing('Chargement des photos…', `${files.length} fichier(s)`);
+  importFiles = [];
+
+  for (const file of files) {
+    const dataUrl = await readFileAsDataUrl(file);
+    importFiles.push({ dataUrl, name: file.name });
+  }
+
+  hideProcessing();
+  showImportStep2();
+});
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showImportStep2() {
+  document.getElementById('import-step-pick').style.display = 'none';
+  document.getElementById('import-step-assign').style.display = 'block';
+  document.getElementById('import-modal-sub').textContent =
+    `${importFiles.length} photo(s) sélectionnée(s) — assignez un angle`;
+
+  // Preview grid
+  const grid = document.getElementById('import-preview-grid');
+  grid.innerHTML = '';
+  importFiles.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'import-preview-thumb';
+    el.innerHTML = `<img src="${f.dataUrl}" />
+      <div class="remove-x" onclick="removeImportFile(${i})">✕</div>`;
+    grid.appendChild(el);
+  });
+
+  // Angle grid — all angles available
+  const ag = document.getElementById('import-angle-grid');
+  ag.innerHTML = '';
+  ALL_ANGLES.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'angle-chip' + (importSelectedAngle === a.id ? ' selected' : '');
+    el.dataset.id = a.id;
+    el.innerHTML = `<div class="chip-icon">${a.icon}</div><div class="chip-label">${a.label}</div>`;
+    el.onclick = () => {
+      importSelectedAngle = a.id;
+      ag.querySelectorAll('.angle-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('import-confirm-btn').disabled = false;
+    };
+    ag.appendChild(el);
+  });
+
+  document.getElementById('import-confirm-btn').disabled = true;
+}
+
+function removeImportFile(idx) {
+  importFiles.splice(idx, 1);
+  if (importFiles.length === 0) {
+    document.getElementById('import-step-pick').style.display = 'block';
+    document.getElementById('import-step-assign').style.display = 'none';
+    return;
+  }
+  showImportStep2();
+}
+
+function confirmImport() {
+  if (!importSelectedAngle || importFiles.length === 0) return;
+  const angleData = ALL_ANGLES.find(a => a.id === importSelectedAngle);
+
+  importFiles.forEach(f => {
+    state.photos.push({
+      id: Date.now() + Math.random(),
+      dataUrl: f.dataUrl,
+      angleId: importSelectedAngle,
+      angleName: angleData.label,
+      angleIcon: angleData.icon,
+      processed: false,
+      processedUrl: null,
+      imported: true,
+    });
+  });
+
+  // Make sure this angle is tracked
+  if (!state.selectedAngles.includes(importSelectedAngle)) {
+    state.selectedAngles.push(importSelectedAngle);
+  }
+
+  closeImportModal();
+  showToast(`${importFiles.length} photo(s) importée(s) ✅`);
+
+  // Navigate to gallery
+  initGallery();
+  if (importContext === 'home') {
+    goTo('gallery');
+  } else if (importContext === 'camera') {
+    updateCameraUI();
+    buildAngleStrip();
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initHome();
+initSetup();
+</script>
+</body>
+</html>
